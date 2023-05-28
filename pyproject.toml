@@ -20,6 +20,9 @@ psycopg2 = "^2.9.6"
 alembic = "^1.11.1"
 fastapi-mail = "^1.2.8"
 uvicorn = "^0.22.0"
+python-dotenv = "^1.0.0"
+redis = "^4.5.5"
+fastapi-limiter = "^0.1.5"
 
 
 [build-system]

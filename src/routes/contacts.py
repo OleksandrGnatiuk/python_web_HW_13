@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status, Query
 from sqlalchemy.orm import Session
+from fastapi_limiter.depends import RateLimiter
 
 from src.database.db import get_db
 from src.database.models import User, Role
@@ -20,7 +21,8 @@ access_delete = RolesAccess([Role.admin])
 
 
 @router.get("/", response_model=List[ContactResponse],
-            dependencies=[Depends(access_get)],
+            dependencies=[Depends(access_get), Depends(RateLimiter(times=2, seconds=5))],
+            description='Two requests on 5 seconds',
             name='Get a list of contacts using query parameters: first name, last name, email')
 async def get_contacts(limit: int = Query(default=10),
                        offset: int = 0,
@@ -37,7 +39,8 @@ async def get_contacts(limit: int = Query(default=10),
 
 
 @router.get("/birthdays", response_model=List[ContactResponse],
-            dependencies=[Depends(access_get)],
+            dependencies=[Depends(access_get), Depends(RateLimiter(times=2, seconds=5))],
+            description='Two requests on 5 seconds',
             name='Get a list of all contacts who has birthday during next 7 days')
 async def get_contacts_by_birthday(limit: int = Query(10, le=300), offset: int = 0,
                                    db: Session = Depends(get_db),
@@ -49,7 +52,8 @@ async def get_contacts_by_birthday(limit: int = Query(10, le=300), offset: int =
 
 
 @router.get("/{contact_id}", response_model=ContactResponse,
-            dependencies=[Depends(access_get)])
+            dependencies=[Depends(access_get), Depends(RateLimiter(times=2, seconds=5))],
+            description='Two requests on 5 seconds')
 async def get_contact(contact_id: int = Path(ge=1),
                       db: Session = Depends(get_db),
                       _: User = Depends(auth_service.get_current_user)):

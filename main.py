@@ -1,16 +1,25 @@
 import time
 
+import redis.asyncio as redis
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi_limiter import FastAPILimiter
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
+from src.conf.config import settings
 from src.database.db import get_db
 from src.routes import contacts, auth
 
 app = FastAPI(swagger_ui_parameters={"operationsSorter": "method"}, title='Homework 11: Contact book')
+
+
+@app.on_event("startup")
+async def startup():
+    r = await redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0)
+    await FastAPILimiter.init(r)
 
 
 @app.middleware("http")
