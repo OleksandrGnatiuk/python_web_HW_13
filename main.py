@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi_limiter import FastAPILimiter
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -13,13 +14,26 @@ from src.conf.config import settings
 from src.database.db import get_db
 from src.routes import contacts, auth
 
-app = FastAPI(swagger_ui_parameters={"operationsSorter": "method"}, title='Homework 11: Contact book')
+app = FastAPI(swagger_ui_parameters={"operationsSorter": "method"}, title='Contact book')
 
 
 @app.on_event("startup")
 async def startup():
     r = await redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0)
     await FastAPILimiter.init(r)
+
+
+origins = [
+    "http://localhost:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.middleware("http")
@@ -30,6 +44,7 @@ async def add_process_time_header(request: Request, call_next):
     process_time = time.time() - start_time
     response.headers["performance"] = str(process_time)
     return response
+
 
 templates = Jinja2Templates(directory='templates')
 app.mount('/static', StaticFiles(directory='static'), name='static')

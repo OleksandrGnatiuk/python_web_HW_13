@@ -13,7 +13,6 @@ from src.services.roles import RolesAccess
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 
-
 access_get = RolesAccess([Role.admin, Role.moderator, Role.user])
 access_create = RolesAccess([Role.admin, Role.moderator])
 access_update = RolesAccess([Role.admin, Role.moderator])
@@ -64,7 +63,8 @@ async def get_contact(contact_id: int = Path(ge=1),
 
 
 @router.post("/", response_model=ContactResponse, status_code=status.HTTP_201_CREATED,
-             dependencies=[Depends(access_create)])
+             dependencies=[Depends(access_create), Depends(RateLimiter(times=2, seconds=5))],
+             description='Two requests on 5 seconds')
 async def create_contact(body: ContactModel,
                          db: Session = Depends(get_db),
                          _: User = Depends(auth_service.get_current_user)):
